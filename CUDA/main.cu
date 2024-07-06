@@ -763,11 +763,6 @@ int main(int argc, char *argv[]) {
 
     }
 
-    for (int i = 0; i < noOfFeatures; ++i) {
-        delete[] featureMatrix[i];
-    }
-    delete[] featureMatrix;
-
     if (config.doProfile()) {
         std::cout << "Total mRMR Calculation Time: " << total_mrmr_time << " ms\n";
         std::cout << "Memory Operations Time (Allocation, Transfer, Deallocation): " << totalMemOpsTime << " ms\n";
@@ -776,6 +771,11 @@ int main(int argc, char *argv[]) {
         end_program = std::chrono::high_resolution_clock::now();
         std::cout << "Total Execution Time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end_program - start_program).count() << " ms\n";
     }
+
+    for (int i = 0; i < noOfFeatures; ++i) {
+        delete[] featureMatrix[i];
+    }
+    delete[] featureMatrix;
 
     return EXIT_SUCCESS;
 }

@@ -409,6 +409,7 @@ int main(int argc, char *argv[]) {
     }
 
     for (size_t i = 0; i < noOfFeatures; ++i) {
+        uint *intOutputs = (uint *) checkedCalloc(noOfFeatures - 1, sizeof(uint));
 
         for (size_t j = 0; j < noOfSamples; ++j) {
             classColumn[j] = discFeatureMatrix[i][j];
@@ -419,7 +420,6 @@ int main(int argc, char *argv[]) {
             start_mrmr = std::chrono::high_resolution_clock::now();
         }
 
-        uint *intOutputs = (uint *) checkedCalloc(noOfFeatures - 1, sizeof(uint));
         mRMR_D(noOfFeatures - 1, noOfSamples, noOfFeatures, featureMatrix, classColumn, intOutputs, featureScores, i);
 
         if(timingEnabled) {
