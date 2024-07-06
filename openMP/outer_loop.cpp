@@ -338,46 +338,6 @@ uint *mRMR_D(uint k, uint noOfSamples, uint noOfFeatures, uint **featureMatrix, 
     return outputFeatures;
 }
 
-std::tuple<double, double*> disc_mRMR_D(uint k, uint noOfSamples, uint noOfFeatures, uint **featureMatrix,
-                                        uint *classColumn, double *outputFeatures, double *featureScores,
-                                        int currentFeature, bool timingEnabled) {
-    uint *intFeatures = (uint *) checkedCalloc(noOfSamples * noOfFeatures, sizeof(uint));
-    uint *intClass = (uint *) checkedCalloc(noOfSamples, sizeof(uint));
-    uint *intOutputs = (uint *) checkedCalloc(k, sizeof(uint));
-    uint **intFeature2D = (uint **) checkedCalloc(noOfFeatures, sizeof(uint *));
-
-    int i;
-
-    std::chrono::high_resolution_clock::time_point startMRMR_D, endMRMR_D;
-    double elapsedMRMR_D;
-
-    if(timingEnabled) {
-        startMRMR_D = std::chrono::high_resolution_clock::now();
-    }
-
-    mRMR_D(k, noOfSamples, noOfFeatures, featureMatrix, classColumn, intOutputs, featureScores, currentFeature);
-    if(timingEnabled) {
-        endMRMR_D = std::chrono::high_resolution_clock::now();
-        elapsedMRMR_D = std::chrono::duration_cast<std::chrono::milliseconds>(endMRMR_D - startMRMR_D).count();
-    }
-
-    for (i = 0; i < k; i++) {
-        outputFeatures[i] = intOutputs[i];
-    }
-
-    FREE_FUNC(intFeatures);
-    FREE_FUNC(intClass);
-    FREE_FUNC(intOutputs);
-    FREE_FUNC(intFeature2D);
-
-    intFeatures = NULL;
-    intClass = NULL;
-    intOutputs = NULL;
-    intFeature2D = NULL;
-
-    return std::make_tuple(elapsedMRMR_D, outputFeatures);
-}/*disc_mRMR_D(int,int,int,double[][],double[],double[],double[])*/
-
 int main(int argc, char *argv[]) {
 
     if (argc < 5) {
