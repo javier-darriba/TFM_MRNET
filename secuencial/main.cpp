@@ -27,127 +27,6 @@ typedef struct {
     int numSecondStates;
 } JointProbabilityState;
 
-void discretizeDataset(const std::vector<std::vector<float>> &real_dat, std::vector<std::vector<unsigned int>> &disc_dat,
-                       unsigned int num_feat, unsigned int num_samp, unsigned int disc_bins);
-
-double *disc_mRMR_D(uint k, uint noOfSamples, uint noOfFeatures, unsigned int **featureMatrix, unsigned int *classColumn,
-                    double *outputFeatures, double *featureScores, int currentFeature, bool timingEnabled,
-                    long long &discretization_time_accum, long long &mrmr_time_accum);
-
-void read_txt(const std::string &file_path, int &noOfFeatures, int &noOfSamples,
-              std::vector<std::vector<float>> &featureMatrix);
-
-int main(int argc, char *argv[]) {
-
-    if (argc < 5) {
-        std::cerr << "Usage: " << argv[0] << " -i <input_file_path> -o <output_file_name> [-t]\n";
-        return EXIT_FAILURE;
-    }
-
-    std::string inputPath, outputFileName;
-    bool timingEnabled = false;
-
-    for (int i = 1; i < argc; i++) {
-        std::string arg = argv[i];
-        if (arg == "-i") {
-            if (i + 1 < argc) {
-                inputPath = argv[++i];
-            } else {
-                std::cerr << "-i option requires one argument." << std::endl;
-                return EXIT_FAILURE;
-            }
-        } else if (arg == "-o") {
-            if (i + 1 < argc) {
-                outputFileName = argv[++i];
-            } else {
-                std::cerr << "-o option requires one argument." << std::endl;
-                return EXIT_FAILURE;
-            }
-        } else if (arg == "-t") {
-            timingEnabled = true;
-        } else {
-            std::cerr << "Unknown option: " << arg << "\n";
-            return EXIT_FAILURE;
-        }
-    }
-
-    if (inputPath.empty() || outputFileName.empty()) {
-        std::cerr << "Both input file path (-i) and output file name (-o) must be specified.\n";
-        return EXIT_FAILURE;
-    }
-
-    std::ofstream outputFile(outputFileName);
-    if (!outputFile.is_open()) {
-        std::cerr << "Error: Could not open output file\n";
-        return EXIT_FAILURE;
-    }
-
-    long long total_discretization_time = 0, total_mrmr_time = 0;
-    std::chrono::high_resolution_clock::time_point start_program, end_program;
-    if (timingEnabled) start_program = std::chrono::high_resolution_clock::now();
-
-    int noOfSamples, noOfFeatures;
-    std::vector<std::vector<float>> oriFeatureMatrix;
-
-    std::chrono::high_resolution_clock::time_point start_read, end_read;
-    if (timingEnabled) start_read = std::chrono::high_resolution_clock::now();
-    read_txt(inputPath, noOfFeatures, noOfSamples, oriFeatureMatrix);
-    if (timingEnabled) {
-        end_read = std::chrono::high_resolution_clock::now();
-        std::cout << "File Reading Time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end_read - start_read).count() << " ms\n";
-    }
-
-    std::vector<std::vector<unsigned int>> discFeatureMatrix;
-    discretizeDataset(oriFeatureMatrix, discFeatureMatrix, noOfFeatures, noOfSamples, 128);
-
-    auto *classColumn = new unsigned int[noOfSamples], **featureMatrix = new unsigned int *[noOfFeatures];
-    auto *outputFeatures = new double[noOfFeatures], *featureScores = new double[noOfFeatures];
-
-    for (int i = 0; i < noOfFeatures; ++i) {
-        featureMatrix[i] = new unsigned int[noOfSamples];
-        for (int j = 0; j < noOfSamples; ++j) {
-            featureMatrix[i][j] = discFeatureMatrix[i][j];
-        }
-    }
-
-    for (size_t i = 0; i < noOfFeatures; ++i) {
-
-        for (size_t j = 0; j < noOfSamples; ++j) {
-            classColumn[j] = discFeatureMatrix[i][j];
-        }
-
-        disc_mRMR_D(noOfFeatures - 1, noOfSamples, noOfFeatures, featureMatrix, classColumn, outputFeatures,
-                    featureScores, i, timingEnabled, total_discretization_time, total_mrmr_time);
-
-        for (int k = 0; k < noOfFeatures; ++k) {
-            if (k != i) {
-                outputFile << std::setprecision(15) << featureScores[k] << " ";
-            } else {
-                outputFile << "NA" << " ";
-            }
-        }
-
-        outputFile << std::endl;
-    }
-
-    for (int i = 0; i < noOfFeatures; ++i) {
-        delete[] featureMatrix[i];
-    }
-    delete[] classColumn;
-    delete[] featureMatrix;
-    delete[] outputFeatures;
-    delete[] featureScores;
-
-    if (timingEnabled) {
-        end_program = std::chrono::high_resolution_clock::now();
-        std::cout << "Total Discretization Time: " << total_discretization_time << " ms\n";
-        std::cout << "Total mRMR_D Calculation Time: " << total_mrmr_time << " ms\n";
-        std::cout << "Total Execution Time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end_program - start_program).count() << " ms\n";
-    }
-
-    return EXIT_SUCCESS;
-}
-
 void *checkedCalloc(size_t vectorLength, size_t sizeOfType) {
     void *allocated = CALLOC_FUNC(vectorLength, sizeOfType);
     if (allocated == NULL) {
@@ -318,7 +197,7 @@ void read_txt(const std::string &file_path, int &noOfFeatures, int &noOfSamples,
     noOfSamples = std::count_if(line.begin(), line.end(), [](unsigned char c) { return std::isspace(c); }) + 1;
 
     std::vector<std::vector<float>> tempFeatureVectors;
-    noOfFeatures = 0; // This will be determined as we read
+    noOfFeatures = 0;
 
     while (std::getline(file, line)) {
         std::istringstream iss(line);
@@ -450,36 +329,128 @@ uint *mRMR_D(uint k, uint noOfSamples, uint noOfFeatures, uint **featureMatrix, 
     return outputFeatures;
 }
 
-double *disc_mRMR_D(uint k, uint noOfSamples, uint noOfFeatures, unsigned int **featureMatrix, unsigned int *classColumn,
-                    double *outputFeatures, double *featureScores, int currentFeature, bool timingEnabled,
-                    long long &discretization_time_accum, long long &mrmr_time_accum){
-    uint *intFeatures = (uint *) checkedCalloc(noOfSamples * noOfFeatures, sizeof(uint));
-    uint *intOutputs = (uint *) checkedCalloc(k, sizeof(uint));
-    std::chrono::high_resolution_clock::time_point start_discretization, end_discretization, start_mrmr, end_mrmr;
+int main(int argc, char *argv[]) {
 
-    int i;
-
-    if(timingEnabled) {
-        start_mrmr = std::chrono::high_resolution_clock::now();
+    if (argc < 5) {
+        std::cerr << "Usage: " << argv[0] << " -i <input_file_path> -o <output_file_name> [-t]\n";
+        return EXIT_FAILURE;
     }
 
-    mRMR_D(k, noOfSamples, noOfFeatures, featureMatrix, classColumn, intOutputs, featureScores, currentFeature);
+    std::string inputPath, outputFileName;
+    bool timingEnabled = false;
 
-    if(timingEnabled) {
-        end_mrmr = std::chrono::high_resolution_clock::now();
-        mrmr_time_accum += std::chrono::duration_cast<std::chrono::milliseconds>(end_mrmr - start_mrmr).count();
-        std::cout << "Feature " << currentFeature << " - mRMR Execution Time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end_mrmr - start_mrmr).count() << " ms\n";
+    for (int i = 1; i < argc; i++) {
+        std::string arg = argv[i];
+        if (arg == "-i") {
+            if (i + 1 < argc) {
+                inputPath = argv[++i];
+            } else {
+                std::cerr << "-i option requires one argument." << std::endl;
+                return EXIT_FAILURE;
+            }
+        } else if (arg == "-o") {
+            if (i + 1 < argc) {
+                outputFileName = argv[++i];
+            } else {
+                std::cerr << "-o option requires one argument." << std::endl;
+                return EXIT_FAILURE;
+            }
+        } else if (arg == "-t") {
+            timingEnabled = true;
+        } else {
+            std::cerr << "Unknown option: " << arg << "\n";
+            return EXIT_FAILURE;
+        }
     }
 
-    for (i = 0; i < k; i++) {
-        outputFeatures[i] = intOutputs[i];
+    if (inputPath.empty() || outputFileName.empty()) {
+        std::cerr << "Both input file path (-i) and output file name (-o) must be specified.\n";
+        return EXIT_FAILURE;
     }
 
-    FREE_FUNC(intFeatures);
-    FREE_FUNC(intOutputs);
+    std::ofstream outputFile(outputFileName);
+    if (!outputFile.is_open()) {
+        std::cerr << "Error: Could not open output file\n";
+        return EXIT_FAILURE;
+    }
 
-    intFeatures = NULL;
-    intOutputs = NULL;
+    std::chrono::high_resolution_clock::time_point start_program, end_program, start_read, end_read,
+    start_disc, end_disc;
+    if (timingEnabled) start_program = std::chrono::high_resolution_clock::now();
 
-    return outputFeatures;
-}/*disc_mRMR_D(int,int,int,double[][],double[],double[],double[])*/
+    int noOfSamples, noOfFeatures;
+    std::vector<std::vector<float>> oriFeatureMatrix;
+
+    if (timingEnabled) start_read = std::chrono::high_resolution_clock::now();
+    read_txt(inputPath, noOfFeatures, noOfSamples, oriFeatureMatrix);
+    if (timingEnabled) {
+        end_read = std::chrono::high_resolution_clock::now();
+        std::cout << "File Reading Time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end_read - start_read).count() << " ms\n";
+        start_disc = std::chrono::high_resolution_clock::now();
+    }
+
+    std::vector<std::vector<unsigned int>> discFeatureMatrix;
+    discretizeDataset(oriFeatureMatrix, discFeatureMatrix, noOfFeatures, noOfSamples, 128);
+
+    auto *classColumn = new unsigned int[noOfSamples], **featureMatrix = new unsigned int *[noOfFeatures];
+    auto *outputFeatures = new double[noOfFeatures], *featureScores = new double[noOfFeatures];
+
+    for (int i = 0; i < noOfFeatures; ++i) {
+        featureMatrix[i] = new unsigned int[noOfSamples];
+        for (int j = 0; j < noOfSamples; ++j) {
+            featureMatrix[i][j] = discFeatureMatrix[i][j];
+        }
+    }
+
+    if (timingEnabled) {
+        end_disc = std::chrono::high_resolution_clock::now();
+        std::cout << "Discretization Time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end_disc - start_disc).count() << " ms\n";
+    }
+
+    for (size_t i = 0; i < noOfFeatures; ++i) {
+
+        for (size_t j = 0; j < noOfSamples; ++j) {
+            classColumn[j] = discFeatureMatrix[i][j];
+        }
+
+        std::chrono::high_resolution_clock::time_point start_mrmr, end_mrmr;
+        if(timingEnabled) {
+            start_mrmr = std::chrono::high_resolution_clock::now();
+        }
+
+        uint *intOutputs = (uint *) checkedCalloc(noOfFeatures - 1, sizeof(uint));
+        mRMR_D(noOfFeatures - 1, noOfSamples, noOfFeatures, featureMatrix, classColumn, intOutputs, featureScores, i);
+
+        if(timingEnabled) {
+            end_mrmr = std::chrono::high_resolution_clock::now();
+            total_mrmr_time += std::chrono::duration_cast<std::chrono::milliseconds>(end_mrmr - start_mrmr).count();
+        }
+
+        for (int k = 0; k < noOfFeatures; ++k) {
+            if (k != i) {
+                outputFile << std::setprecision(15) << featureScores[k] << " ";
+            } else {
+                outputFile << "NA" << " ";
+            }
+        }
+        outputFile << std::endl;
+
+        FREE_FUNC(intOutputs);
+    }
+
+    if (timingEnabled) {
+        end_program = std::chrono::high_resolution_clock::now();
+        std::cout << "Total mRMR_D Calculation Time: " << total_mrmr_time << " ms\n";
+        std::cout << "Total Execution Time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end_program - start_program).count() << " ms\n";
+    }
+
+    for (int i = 0; i < noOfFeatures; ++i) {
+        delete[] featureMatrix[i];
+    }
+    delete[] classColumn;
+    delete[] featureMatrix;
+    delete[] outputFeatures;
+    delete[] featureScores;
+
+    return EXIT_SUCCESS;
+}
