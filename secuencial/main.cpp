@@ -374,6 +374,7 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
+    long long total_mrmr_time;
     std::chrono::high_resolution_clock::time_point start_program, end_program, start_read, end_read,
     start_disc, end_disc;
     if (timingEnabled) start_program = std::chrono::high_resolution_clock::now();
