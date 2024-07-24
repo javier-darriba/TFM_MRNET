@@ -11,17 +11,17 @@ Para compilar y ejecutar los programas en este repositorio, necesitarás las sig
 
 ## Compilación
 - **Secuencial:** Para compilar la versión secuencial del código, puedes usar el siguiente comando:
-- g++ -o mrnet main.cpp
+  g++ -o mrnet main.cpp
 - **OpenMP:**
-- Para la versión que paraleliza los calculos internos de mRMR:
+  Para la versión que paraleliza los calculos internos de mRMR:
   g++ -fopenmp -o mrnet inner_loop.cpp
-- Para la versión que paraleliza el bucle externo MRNET:
+  Para la versión que paraleliza el bucle externo MRNET:
   g++ -fopenmp -o mrnet outer_loop.cpp
 
 - **CUDA:**
-- Para una GPU A100:
+  Para una GPU A100:
   nvcc -gencode=arch=compute_80,code=sm_80 -o mrnet your_source_file.cu
-- Para una GPU T4:
+  Para una GPU T4:
   nvcc -gencode=arch=compute_75,code=sm_75 -o mrnet your_source_file.cu
 
 ## Uso
@@ -29,6 +29,7 @@ Para ejecutar el programa, es necesario proporcionar una ruta al archivo de entr
 contenga los datos de la matriz de características, utilizando el argumento -i, y especificar la
 ruta donde se desea generar el archivo de salida para los resultados, utilizando el argumento
 -o.
+
 De manera opcional, el usuario también tiene la posibilidad de incluir el argumento -t.
 Este argumento permite que el programa muestre por pantalla el tiempo total de ejecución,
 así como los tiempos parciales de varias secciones específicas del programa.
@@ -43,8 +44,8 @@ El archivo de entrada debe estar formateado de la siguiente manera:
 El archivo de salida contiene una matriz de dimensiones número_de_características x número_de_características, donde cada fila representa los resultados del análisis mRMR de esa característica contra las demás, mostrando sus puntuaciones. Las características se listan en el mismo orden que en el archivo de entrada. Las comparaciones de una característica consigo misma se marcan con "NA".
 
 ### Comandos para ejecución
-- **Programa principal:**
-- ./mrnet -i ruta/a/fichero_entrada.txt -o ruta/a/fichero_salida.txt [-t]
+**Programa principal:**
+  ./mrnet -i ruta/a/fichero_entrada.txt -o ruta/a/fichero_salida.txt [-t]
 
-- **Ajuste del archivo de entrada:**
-python remove_first_element.py ruta/a/fichero_entrada.txt
+**Ajuste del archivo de entrada:**
+  python remove_first_element.py ruta/a/fichero_entrada.txt
