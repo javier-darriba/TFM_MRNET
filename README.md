@@ -27,11 +27,11 @@ Para compilar y ejecutar los programas en este repositorio, necesitarás las sig
 
   Para una GPU A100:
 
-  nvcc -gencode=arch=compute_80,code=sm_80 -o mrnet your_source_file.cu
+  nvcc -gencode=arch=compute_80,code=sm_80 -o mrnet main.cu
 
   Para una GPU T4:
 
-  nvcc -gencode=arch=compute_75,code=sm_75 -o mrnet your_source_file.cu
+  nvcc -gencode=arch=compute_75,code=sm_75 -o mrnet main.cu
 
 ## Uso
 Para ejecutar el programa, es necesario proporcionar una ruta al archivo de entrada que
