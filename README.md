@@ -1,7 +1,7 @@
 # TFM_MRNET
 
 ## Descripción
-Este repositorio alberga las implementaciones secuenciales y paralelas del proyecto MRNET. Incluye versiones que aprovechan la computación paralela mediante multihilo y CUDA, basadas en las bibliotecas FEAST y ParallelFST, esta última diseñada para optimizar la inferencia de redes genéticas. Estas implementaciones están preparadas para funcionar tanto en sistemas multinúcleo de memoria compartida como en GPUs de NVIDIA.
+Este repositorio alberga las implementaciones secuenciales y paralelas del método MRNET. Estas versiones aprovechan la computación paralela mediante multihilo y CUDA, y están basadas en las bibliotecas FEAST y ParallelFST, esta última diseñada para optimizar la inferencia de redes genéticas. Las implementaciones están preparadas para funcionar tanto en sistemas multinúcleo de memoria compartida como en GPUs de NVIDIA.
 
 ## Prerrequisitos
 Para compilar y ejecutar los programas en este repositorio, necesitarás las siguientes herramientas con las versiones especificadas (puede que funcionen versiones anteriores si son compatibles):
