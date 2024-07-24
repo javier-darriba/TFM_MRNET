@@ -11,17 +11,26 @@ Para compilar y ejecutar los programas en este repositorio, necesitarás las sig
 
 ## Compilación
 - **Secuencial:** Para compilar la versión secuencial del código, puedes usar el siguiente comando:
+
   g++ -o mrnet main.cpp
 - **OpenMP:**
+
   Para la versión que paraleliza los calculos internos de mRMR:
+
   g++ -fopenmp -o mrnet inner_loop.cpp
+
   Para la versión que paraleliza el bucle externo MRNET:
+
   g++ -fopenmp -o mrnet outer_loop.cpp
 
 - **CUDA:**
+
   Para una GPU A100:
+
   nvcc -gencode=arch=compute_80,code=sm_80 -o mrnet your_source_file.cu
+
   Para una GPU T4:
+
   nvcc -gencode=arch=compute_75,code=sm_75 -o mrnet your_source_file.cu
 
 ## Uso
@@ -45,7 +54,9 @@ El archivo de salida contiene una matriz de dimensiones número_de_característi
 
 ### Comandos para ejecución
 **Programa principal:**
+  
   ./mrnet -i ruta/a/fichero_entrada.txt -o ruta/a/fichero_salida.txt [-t]
 
 **Ajuste del archivo de entrada:**
+  
   python remove_first_element.py ruta/a/fichero_entrada.txt
